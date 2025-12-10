@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { NOTE_STRINGS } from '../utils/noteUtils';
-import { GUITAR_STRINGS, getFretFromMidi } from '../utils/guitarData';
+import { getFretFromMidi } from '../utils/guitarData';
 import { noteToMidi } from '../utils/noteUtils';
 import { NoteInfo } from '../types';
 
