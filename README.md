@@ -329,6 +329,7 @@ watch(currentNote, (newNote) => {
     }
 });
 </script>
+
 4. 接下来的开发建议
 
 模型文件：如果使用 ml5.js，你需要去 GitHub 下载 crepe 模型的文件夹（model/），并将其放入 Vue 项目的 public/ 目录下，否则加载会失败。

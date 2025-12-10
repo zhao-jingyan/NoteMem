@@ -14,15 +14,6 @@
     >
       停止
     </button>
-    
-    <div v-if="isListening" class="flex space-x-4">
-      <button 
-        @click="onNextQuestion" 
-        class="px-6 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition"
-      >
-        下一题
-      </button>
-    </div>
   </div>
 </template>
 
@@ -34,11 +25,9 @@ defineProps<{
 const emit = defineEmits<{
   start: [];
   stop: [];
-  nextQuestion: [];
 }>();
 
 const onStart = () => emit('start');
 const onStop = () => emit('stop');
-const onNextQuestion = () => emit('nextQuestion');
 </script>
 

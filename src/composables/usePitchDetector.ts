@@ -16,11 +16,28 @@ export function usePitchDetector() {
   const frequencyBuffer: number[] = [];
 
   let audioSource: MediaStreamAudioSourceNode | null = null;
+  let gainNode: GainNode | null = null;
   let analyser: AnalyserNode | null = null;
   let animationFrameId: number | null = null;
   let detectPitch: ((signal: Float32Array) => number | null) | null = null;
   const bufferLength = 4096;
   const dataArray = new Float32Array(bufferLength);
+  const GAIN_VALUE = 3.0; // 增益倍数，可根据需要调整（1.0 = 无增益，3.0 = 3倍增益）
+  
+  // Gate 参数
+  const GATE_THRESHOLD = 0.01; // 音量阈值（0-1之间，可根据实际调整）
+  const GATE_HOLD_TIME = 100; // Gate关闭后保持输出的时间（毫秒）
+  let gateOpenTime = 0; // Gate打开的时间戳
+  let lastValidNote: NoteInfo | null = null; // 最后一次有效的音符信息
+
+  // 计算音频信号音量（RMS - Root Mean Square）
+  const calculateRMS = (audioData: Float32Array): number => {
+    let sum = 0;
+    for (let i = 0; i < audioData.length; i++) {
+      sum += audioData[i] * audioData[i];
+    }
+    return Math.sqrt(sum / audioData.length);
+  };
 
   // 核心：平滑算法 (中值滤波 + 移动平均)
   const getSmoothedFrequency = (freq: number): number => {
@@ -53,13 +70,17 @@ export function usePitchDetector() {
       // 使用实际采样率初始化 YIN 算法
       detectPitch = YIN({ sampleRate });
 
-      // 创建音频源和分析器
+      // 创建音频源、增益节点和分析器
       audioSource = audioCtx.createMediaStreamSource(stream);
+      gainNode = audioCtx.createGain();
+      gainNode.gain.value = GAIN_VALUE; // 设置增益值
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = bufferLength * 2;
       analyser.smoothingTimeConstant = 0.8;
       
-      audioSource.connect(analyser);
+      // 连接音频链路：audioSource -> gainNode -> analyser
+      audioSource.connect(gainNode);
+      gainNode.connect(analyser);
 
       isListening.value = true;
       processAudio();
@@ -74,24 +95,54 @@ export function usePitchDetector() {
 
     analyser.getFloatTimeDomainData(dataArray);
     
-    // 使用 pitchfinder 检测音高
-    const frequency = detectPitch(dataArray);
+    // 计算音频音量（RMS）
+    const rms = calculateRMS(dataArray);
+    const now = Date.now();
     
-    if (frequency && !isNaN(frequency) && isFinite(frequency)) {
-      // 应用平滑处理
-      const smoothFreq = getSmoothedFrequency(frequency);
-      currentFrequency.value = smoothFreq;
+    // Gate 逻辑：只有当音量超过阈值时，才检测音高
+    if (rms > GATE_THRESHOLD) {
+      // Gate 打开，更新打开时间
+      gateOpenTime = now;
       
-      // 转换数据供 UI 使用
-      if (smoothFreq > 0) {
-        currentNote.value = getNoteFromFrequency(smoothFreq);
+      // 使用 pitchfinder 检测音高
+      const frequency = detectPitch(dataArray);
+      
+      if (frequency && !isNaN(frequency) && isFinite(frequency)) {
+        // 应用平滑处理
+        const smoothFreq = getSmoothedFrequency(frequency);
+        currentFrequency.value = smoothFreq;
+        
+        // 转换数据供 UI 使用
+        if (smoothFreq > 0) {
+          const note = getNoteFromFrequency(smoothFreq);
+          currentNote.value = note;
+          lastValidNote = note; // 保存最后一次有效的音符
+        } else {
+          currentNote.value = { note: '-', octave: 0, centsOff: 0, frequency: 0 };
+          currentFrequency.value = 0;
+        }
       } else {
-        currentNote.value = { note: '-', octave: 0, centsOff: 0, frequency: 0 };
-        currentFrequency.value = 0;
+        // 检测失败，但如果之前有有效音符，保持它
+        if (lastValidNote) {
+          currentNote.value = lastValidNote;
+        } else {
+          currentNote.value = { note: '-', octave: 0, centsOff: 0, frequency: 0 };
+          currentFrequency.value = 0;
+        }
       }
     } else {
-      currentNote.value = { note: '-', octave: 0, centsOff: 0, frequency: 0 };
-      currentFrequency.value = 0;
+      // Gate 关闭，但如果在保持时间内，继续输出上次有效音符
+      const timeSinceGateClose = now - gateOpenTime;
+      
+      if (timeSinceGateClose < GATE_HOLD_TIME && lastValidNote) {
+        // 在保持时间内，继续显示上次的有效音符
+        currentNote.value = lastValidNote;
+      } else {
+        // 超过保持时间，清空显示
+        currentNote.value = { note: '-', octave: 0, centsOff: 0, frequency: 0 };
+        currentFrequency.value = 0;
+        lastValidNote = null;
+      }
     }
 
     // 继续处理
@@ -111,9 +162,16 @@ export function usePitchDetector() {
       audioSource = null;
     }
     
+    if (gainNode) {
+      gainNode.disconnect();
+      gainNode = null;
+    }
+    
     analyser = null;
     detectPitch = null;
     frequencyBuffer.length = 0; // 清空缓冲区
+    lastValidNote = null; // 清空最后有效音符
+    gateOpenTime = 0; // 重置 gate 时间
     cleanup();
   };
 
