@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Vue global types (auto-generated)
+vue-global.d.ts
+src/types/vue-global.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
