@@ -1,0 +1,24 @@
+<template>
+  <div class="bg-gray-800 rounded-lg p-6 text-center">
+    <div class="text-gray-400 text-sm mb-2">当前检测到的音</div>
+    <div class="text-4xl font-bold text-green-400 mb-2">
+      {{ currentNote.note }}{{ currentNote.octave }}
+    </div>
+    <div class="text-gray-500 text-sm">
+      频率: {{ currentFrequency.toFixed(1) }} Hz
+    </div>
+    <div v-if="currentNote.centsOff !== 0" class="mt-2 text-xs text-yellow-400">
+      音分偏差: {{ currentNote.centsOff }}
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { NoteInfo } from '../types';
+
+defineProps<{
+  currentNote: NoteInfo;
+  currentFrequency: number;
+}>();
+</script>
+
