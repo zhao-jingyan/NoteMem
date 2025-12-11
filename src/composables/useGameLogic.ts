@@ -8,8 +8,8 @@ export function useGameLogic() {
   const targetStringIndex = ref(5); // 默认 6 弦 (E弦, 索引5)
   const targetNoteName = ref('G');
   const isCorrect = ref(false);
-  const correctDuration = ref(0);
-  const requiredCorrectDuration = 500; // 需要保持正确 500ms
+  const correctStartTime = ref<number | null>(null); // 音高开始正确的时间戳
+  const requiredCorrectDuration = 100; // 需要保持正确 100ms 才能判定为正确
 
   // 筛选条件：可用的音符列表（默认所有音符）
   const availableNotes = ref<string[]>(ALL_NOTES.notes);
@@ -31,7 +31,7 @@ export function useGameLogic() {
   const generateNextQuestion = () => {
     // 先重置状态
     isCorrect.value = false;
-    correctDuration.value = 0;
+    correctStartTime.value = null;
     
     // 根据筛选条件选择琴弦
     if (availableStringIndex.value !== null) {
@@ -53,23 +53,38 @@ export function useGameLogic() {
   };
 
   // 检查答案是否正确（只比较音名，不比较八度）
+  // 需要音高持续正确 100ms 才能判定为正确，避免误触
   const checkAnswer = (currentNote: NoteInfo) => {
+    // 如果已经判定为正确，保持状态不变（避免在等待期间因为音高变化而重置）
+    if (isCorrect.value) {
+      return true;
+    }
+
     if (currentNote.note === '-' || !currentNote.frequency) {
-      isCorrect.value = false;
-      correctDuration.value = 0;
+      // 音高无效，重置计时
+      correctStartTime.value = null;
       return false;
     }
 
+    const now = Date.now();
+
     // 只比较音名，忽略八度
     if (currentNote.note === targetNoteName.value) {
-      correctDuration.value += 16; // 假设每帧约16ms
-      if (correctDuration.value >= requiredCorrectDuration) {
-        isCorrect.value = true;
-        return true;
+      // 音高正确
+      if (correctStartTime.value === null) {
+        // 开始计时
+        correctStartTime.value = now;
+      } else {
+        // 检查持续时间是否达到要求
+        const duration = now - correctStartTime.value;
+        if (duration >= requiredCorrectDuration) {
+          isCorrect.value = true;
+          return true;
+        }
       }
     } else {
-      isCorrect.value = false;
-      correctDuration.value = 0;
+      // 音高不正确，重置计时
+      correctStartTime.value = null;
     }
     
     return false;

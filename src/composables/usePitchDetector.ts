@@ -22,7 +22,7 @@ export function usePitchDetector() {
   let detectPitch: ((signal: Float32Array) => number | null) | null = null;
   const bufferLength = 4096;
   const dataArray = new Float32Array(bufferLength);
-  const GAIN_VALUE = 3.0; // 增益倍数，可根据需要调整（1.0 = 无增益，3.0 = 3倍增益）
+  const GAIN_VALUE = 6.0; // 增益倍数，可根据需要调整（1.0 = 无增益，3.0 = 3倍增益）
   
   // Gate 参数
   const GATE_THRESHOLD = 0.01; // 音量阈值（0-1之间，可根据实际调整）

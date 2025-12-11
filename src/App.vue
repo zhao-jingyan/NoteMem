@@ -133,12 +133,13 @@ watch(isCorrect, (newValue: boolean) => {
       clearTimeout(autoNextTimer);
     }
     // 延迟一下再进入下一题，让用户看到反馈
+    // 一旦音高对了就等待，不需要持续保持正确
     autoNextTimer = setTimeout(() => {
-      if (isCorrect.value && isListening.value) {
+      if (isListening.value) {
         generateNextQuestion();
         autoNextTimer = null;
       }
-    }, 200);
+    }, 1000);
   }
 });
 </script>
