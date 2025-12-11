@@ -138,7 +138,7 @@ watch(isCorrect, (newValue: boolean) => {
         generateNextQuestion();
         autoNextTimer = null;
       }
-    }, 500);
+    }, 200);
   }
 });
 </script>
