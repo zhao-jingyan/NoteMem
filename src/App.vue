@@ -18,7 +18,7 @@
         请在第 <span class="text-yellow-400 font-bold text-2xl">{{ targetString }}</span> 弦演奏
       </div>
       <div class="text-6xl font-bold mt-2 text-green-400">{{ targetNoteName }}</div>
-      <div v-if="isCorrect" class="mt-4 text-2xl text-green-500 animate-pulse">
+      <div v-if="isCorrect" class="mt-4 text-2xl text-green-500">
         ✓ 正确！准备下一题...
       </div>
     </div>
