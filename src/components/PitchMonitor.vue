@@ -4,9 +4,6 @@
     <div class="text-4xl font-bold text-green-400 mb-2">
       {{ currentNote.note }}
     </div>
-    <div class="text-gray-500 text-sm">
-      频率: {{ currentFrequency.toFixed(1) }} Hz
-    </div>
   </div>
 </template>
 
@@ -15,7 +12,6 @@ import { NoteInfo } from '../types';
 
 defineProps<{
   currentNote: NoteInfo;
-  currentFrequency: number;
 }>();
 </script>
 

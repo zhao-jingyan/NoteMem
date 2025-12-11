@@ -1,6 +1,17 @@
 <template>
   <div class="w-full overflow-x-auto">
     <svg viewBox="0 0 1000 280" class="w-full h-auto bg-gray-900 rounded-lg shadow-xl">
+      <!-- 上琴枕 (Nut) - 白色矩形，位于指板最左侧 -->
+      <rect 
+        x="0" 
+        y="10" 
+        width="12" 
+        height="260" 
+        fill="white" 
+        stroke="#ddd" 
+        stroke-width="1"
+      />
+      
       <g v-for="i in 24" :key="`fret-${i}`">
         <line 
           :x1="calcFretPos(i)" y1="10" 

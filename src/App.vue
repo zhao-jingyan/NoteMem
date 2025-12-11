@@ -2,6 +2,17 @@
   <div class="min-h-screen bg-slate-800 text-white flex flex-col items-center p-8">
     <h1 class="text-3xl font-bold mb-8">NoteMem: Guitar Trainer</h1>
 
+    <!-- 筛选器组件 -->
+    <div class="w-full max-w-2xl mb-8">
+      <FilterControls 
+        :is-listening="isListening"
+        :selected-scale-name="selectedScaleName"
+        :selected-string-index="selectedStringIndex"
+        @scale-change="handleScaleChange"
+        @string-change="handleStringChange"
+      />
+    </div>
+
     <div class="mb-8 text-center" v-if="isListening">
       <div class="text-gray-400 text-lg mb-2">
         请在第 <span class="text-yellow-400 font-bold text-2xl">{{ targetString }}</span> 弦演奏
@@ -35,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { usePitchDetector } from './composables/usePitchDetector';
 import { useGameLogic } from './composables/useGameLogic';
 import { GUITAR_STRINGS } from './utils/guitarData';
@@ -43,16 +54,36 @@ import { NoteInfo } from './types';
 import Fretboard from './components/Fretboard.vue';
 import PitchMonitor from './components/PitchMonitor.vue';
 import GameControls from './components/GameControls.vue';
+import FilterControls from './components/FilterControls.vue';
+import { ALL_NOTES } from './utils/scaleUtils';
 
 const { startListening, stopListening, isListening, currentNote, currentFrequency } = usePitchDetector();
 const { 
   targetStringIndex, 
   targetNoteName, 
   isCorrect,
+  setAvailableNotes,
+  setAvailableStringIndex,
   generateNextQuestion, 
   checkAnswer, 
   calculateDetectedFret 
 } = useGameLogic();
+
+// 筛选器状态
+const selectedScaleName = ref(ALL_NOTES.name);
+const selectedStringIndex = ref<number | null>(null);
+
+// 处理调式变化
+const handleScaleChange = (scaleName: string, notes: string[]) => {
+  selectedScaleName.value = scaleName;
+  setAvailableNotes(notes);
+};
+
+// 处理琴弦变化
+const handleStringChange = (stringIndex: number | null) => {
+  selectedStringIndex.value = stringIndex;
+  setAvailableStringIndex(stringIndex);
+};
 
 // 用于跟踪自动跳转的定时器
 let autoNextTimer: ReturnType<typeof setTimeout> | null = null;
